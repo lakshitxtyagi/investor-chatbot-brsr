@@ -23,6 +23,7 @@ OUTPUT_DIR     = Path("brsr-data")
 XML_DIR        = OUTPUT_DIR / "xml"
 CSV_DIR        = OUTPUT_DIR / "csv"
 DOWNLOAD_DELAY = 1.0
+START_INDEX = 1  # Change to 594 to resume from file 594 # Change to 594 to resume from file 594, or any desired starting index
 
 BASE_URL    = "https://www.nseindia.com"
 LISTING_URL = f"{BASE_URL}/companies-listing/corporate-filings-bussiness-sustainabilitiy-reports"
@@ -235,6 +236,9 @@ def main():
     dl_ok = dl_fail = parse_ok = parse_fail = 0
 
     for i, rec in enumerate(records, 1):
+        # Skip records before START_INDEX
+        if i < START_INDEX:
+            continue
         symbol  = rec.get("symbol", f"UNK_{i}")
         company = rec.get("companyName", symbol)
         xml_url = rec.get("xbrlFile", "").strip()

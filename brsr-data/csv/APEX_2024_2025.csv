@@ -195,7 +195,31 @@ APEX,APEX FROZEN FOODS LIMITED,2024,2025,08-Sep-2025,NumberOfComplaintsFiledFrom
 APEX,APEX FROZEN FOODS LIMITED,2024,2025,08-Sep-2025,NumberOfComplaintsPendingFromStakeHolderGroupResolutionAtTheEndOfYear,0,I_ComplaintReceivedFromInvestors_PY,2024-03-31,in-capmkt:StakeHolderGroupFromWhomComplaintIsReceivedAxis=in-capmkt:ComplaintReceivedFromInvestorsMember,pure,0
 APEX,APEX FROZEN FOODS LIMITED,2024,2025,08-Sep-2025,RemarksStakeHolderGroupFromWhomComplaintIsReceived,NA,D_ComplaintReceivedFromInvestors_PY,2023-04-01 to 2024-03-31,in-capmkt:StakeHolderGroupFromWhomComplaintIsReceivedAxis=in-capmkt:ComplaintReceivedFromInvestorsMember,,
 APEX,APEX FROZEN FOODS LIMITED,2024,2025,08-Sep-2025,GrievanceRedressalMechanismInPlace,Yes,D_ComplaintReceivedFromShareholders,2024-04-01 to 2025-03-31,in-capmkt:StakeHolderGroupFromWhomComplaintIsReceivedAxis=in-capmkt:ComplaintReceivedFromShareholdersMember,,
-APEX,APEX FROZEN FOODS LIMITED,2024,2025,08-Sep-2025,WebLinkForGrievanceRedressPolicy,"https://apexfrozenfoods.in/
+APEX,APEX FROZEN FOODS LIMITED,2024,2(env) akash@soul:~/Documents/projects/courses/advance_NLP/investor-chatbot-brsr$ git add .
+(env) akash@soul:~/Documents/projects/courses/advance_NLP/investor-chatbot-brsr$ git commit -m "Updated scraper"
+On branch feature-scraper
+nothing to commit, working tree clean
+(env) akash@soul:~/Documents/projects/courses/advance_NLP/investor-chatbot-brsr$ git push origin main
+To https://github.com/lakshitxtyagi/investor-chatbot-brsr.git
+ ! [rejected]        main -> main (non-fast-forward)
+error: failed to push some refs to 'https://github.com/lakshitxtyagi/investor-chatbot-brsr.git'
+hint: Updates were rejected because a pushed branch tip is behind its remote
+hint: counterpart. If you want to integrate the remote changes, use 'git pull'
+hint: before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+(env) akash@soul:~/Documents/projects/courses/advance_NLP/investor-chatbot-brsr$ git pull origin main
+From https://github.com/lakshitxtyagi/investor-chatbot-brsr
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+(env) akash@soul:~/Documents/projects/courses/advance_NLP/investor-chatbot-brsr$ git push origin main
+To https://github.com/lakshitxtyagi/investor-chatbot-brsr.git
+ ! [rejected]        main -> main (non-fast-forward)
+error: failed to push some refs to 'https://github.com/lakshitxtyagi/investor-chatbot-brsr.git'
+hint: Updates were rejected because a pushed branch tip is behind its remote
+hint: counterpart. If you want to integrate the remote changes, use 'git pull'
+hint: before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+(env) akash@soul:~/Documents/projects/courses/advance_NLP/investor-chatbot-brsr$ 025,08-Sep-2025,WebLinkForGrievanceRedressPolicy,"https://apexfrozenfoods.in/
 investors/contact-us/",D_ComplaintReceivedFromShareholders,2024-04-01 to 2025-03-31,in-capmkt:StakeHolderGroupFromWhomComplaintIsReceivedAxis=in-capmkt:ComplaintReceivedFromShareholdersMember,,
 APEX,APEX FROZEN FOODS LIMITED,2024,2025,08-Sep-2025,NumberOfComplaintsFiledFromStakeHolderGroupDuringTheYear,0,D_ComplaintReceivedFromShareholders,2024-04-01 to 2025-03-31,in-capmkt:StakeHolderGroupFromWhomComplaintIsReceivedAxis=in-capmkt:ComplaintReceivedFromShareholdersMember,pure,0
 APEX,APEX FROZEN FOODS LIMITED,2024,2025,08-Sep-2025,NumberOfComplaintsPendingFromStakeHolderGroupResolutionAtTheEndOfYear,0,I_ComplaintReceivedFromShareholders,2025-03-31,in-capmkt:StakeHolderGroupFromWhomComplaintIsReceivedAxis=in-capmkt:ComplaintReceivedFromShareholdersMember,pure,0
