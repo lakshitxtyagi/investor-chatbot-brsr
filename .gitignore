@@ -207,3 +207,4 @@ marimo/_lsp/
 __marimo__/
 
 brsr-data/chunks/*
+.DS_Store
