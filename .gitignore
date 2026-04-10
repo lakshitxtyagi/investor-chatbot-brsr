@@ -208,3 +208,4 @@ __marimo__/
 
 brsr-data/chunks/*
 .DS_Store
+backend/model
