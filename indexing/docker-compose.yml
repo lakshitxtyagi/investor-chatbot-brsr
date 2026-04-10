@@ -4,24 +4,23 @@ services:
     - --host
     - 0.0.0.0
     - --port
-    - '8080'
+    - '8083'
     - --scheme
     - http
     image: cr.weaviate.io/semitechnologies/weaviate:1.36.6
     ports:
-    - 8080:8080
+    - 8083:8083
     - 50051:50051
     volumes:
-    - weaviate_data:/var/lib/weaviate
+    - ./weaviate_data:/weaviate_data
     restart: on-failure:0
     environment:
       QUERY_DEFAULTS_LIMIT: 25
-      PERSISTENCE_DATA_PATH: './home/kunal/jhinga/plaksha/investor-chatbot-brsr/brsr-data'
+      PERSISTENCE_DATA_PATH: '/weaviate_data'
       CLUSTER_HOSTNAME: 'node1'
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'false'
       AUTHENTICATION_APIKEY_ENABLED: 'true'
       AUTHENTICATION_APIKEY_ALLOWED_KEYS: 'user-a-key,user-b-key'
       AUTHENTICATION_APIKEY_USERS: 'user-a,user-b'
       AUTHORIZATION_ENABLE_RBAC: 'false'
-volumes:
-  weaviate_data:
+# weaviate_data/ folder is created automatically next to docker-compose.yml
