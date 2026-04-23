@@ -14,6 +14,7 @@ from pydantic import BaseModel
 
 from rag import execute_rag
 from due_diligence import execute_due_diligence
+from compare import compare_companies, list_symbols
 
 app = FastAPI(
     title="BRSR RAG API",
@@ -104,6 +105,56 @@ async def due_diligence(request: DueDiligenceRequest):
         company=request.company.strip(),
         symbol=request.symbol.strip().upper() if request.symbol else None,
     )
+    return result
+
+
+class CompareRequest(BaseModel):
+    company1: str
+    company2: str
+
+
+class MetricValue(BaseModel):
+    display: str
+    raw: float | None = None
+
+
+class CompareMetric(BaseModel):
+    label: str
+    c1: MetricValue
+    c2: MetricValue
+    winner: str | None = None
+    lower_is_better: bool = False
+
+
+class CompareSection(BaseModel):
+    title: str
+    metrics: list[CompareMetric]
+
+
+class CompanyMeta(BaseModel):
+    symbol: str
+    name: str
+
+
+class CompareResponse(BaseModel):
+    company1: CompanyMeta
+    company2: CompanyMeta
+    sections: list[CompareSection]
+
+
+@app.get("/compare/symbols")
+def get_symbols():
+    return {"symbols": list_symbols()}
+
+
+@app.post("/compare", response_model=CompareResponse)
+def compare(request: CompareRequest):
+    if not request.company1.strip() or not request.company2.strip():
+        raise HTTPException(status_code=400, detail="Both company fields must be non-empty")
+    try:
+        result = compare_companies(request.company1.strip(), request.company2.strip())
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     return result
 
 

@@ -394,19 +394,21 @@ export default function DashboardPage() {
         {/* Nav */}
         <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: "auto" }}>
           {[
-            { label: "Dashboard", icon: "M2 12L6 4l4 6 2-3 2 5", active: true },
-            { label: "BRSR Reports", icon: "M3 3h10v10H3zM3 7h10M7 3v10", active: false },
-            { label: "Alerts", icon: "M8 2a5 5 0 010 10A5 5 0 018 2zM8 14v1", active: false },
+            { label: "Dashboard", icon: "M2 12L6 4l4 6 2-3 2 5", active: true, href: "/" },
+            { label: "Compare", icon: "M2 8h5M9 8h5M8 2v5M8 9v5", active: false, href: "/compare" },
+            { label: "Research", icon: "M3 3h10v10H3zM3 7h10M7 3v10", active: false, href: "/research" },
+            { label: "Alerts", icon: "M8 2a5 5 0 010 10A5 5 0 018 2zM8 14v1", active: false, href: "#" },
           ].map((item) => (
-            <div
-              key={item.label}
-              style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 11px", borderRadius: 7, background: item.active ? "#1e2030" : "transparent", cursor: "pointer", fontSize: 15, color: item.active ? "#e2e8f0" : "#475569" }}
-            >
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path d={item.icon} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              {item.label}
-            </div>
+            <Link key={item.label} href={item.href} style={{ textDecoration: "none" }}>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 11px", borderRadius: 7, background: item.active ? "#1e2030" : "transparent", cursor: "pointer", fontSize: 15, color: item.active ? "#e2e8f0" : "#475569" }}
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d={item.icon} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {item.label}
+              </div>
+            </Link>
           ))}
         </div>
 
@@ -445,6 +447,14 @@ export default function DashboardPage() {
                 style={{ background: "none", border: "none", outline: "none", fontSize: 16, color: "#e2e8f0", width: 170, fontFamily: "inherit" }}
               />
             </div>
+
+            {/* Compare button */}
+            <Link href="/compare" style={{ textDecoration: "none" }}>
+              <button style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 16px", background: "#1e2030", border: "1px solid #334155", borderRadius: 7, cursor: "pointer", fontSize: 16, fontWeight: 600, color: "#94a3b8", letterSpacing: "0.01em" }}>
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 8h5M9 8h5M8 2v5M8 9v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+                Compare
+              </button>
+            </Link>
 
             {/* Research button */}
             <Link href="/research" style={{ textDecoration: "none" }}>
