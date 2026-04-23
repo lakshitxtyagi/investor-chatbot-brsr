@@ -168,7 +168,7 @@ function GradeChip({ grade }: { grade: string }) {
   };
   const c = colors[grade] || { bg: "#1e2030", color: "#94a3b8" };
   return (
-    <span style={{ fontSize: 12, fontWeight: 700, padding: "3px 9px", borderRadius: 5, background: c.bg, color: c.color, letterSpacing: "0.04em" }}>
+    <span style={{ fontSize: 14, fontWeight: 700, padding: "3px 9px", borderRadius: 5, background: c.bg, color: c.color, letterSpacing: "0.04em" }}>
       {grade}
     </span>
   );
@@ -211,22 +211,22 @@ function CompanyCard({ company, onClick, selected }: { company: typeof COMPANIES
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
-            <span style={{ fontSize: 15, fontWeight: 600, color: "#e2e8f0" }}>{company.ticker}</span>
+            <span style={{ fontSize: 17, fontWeight: 600, color: "#e2e8f0" }}>{company.ticker}</span>
             <TrendIcon trend={company.trend} />
           </div>
-          <div style={{ fontSize: 12, color: "#475569", maxWidth: 160, lineHeight: 1.4 }}>{company.name}</div>
+          <div style={{ fontSize: 14, color: "#475569", maxWidth: 160, lineHeight: 1.4 }}>{company.name}</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 5 }}>
           <GradeChip grade={company.grade} />
-          <span style={{ fontSize: 11, color: sectorColor, background: `${sectorColor}18`, padding: "2px 7px", borderRadius: 4 }}>{company.sector}</span>
+          <span style={{ fontSize: 13, color: sectorColor, background: `${sectorColor}18`, padding: "2px 7px", borderRadius: 4 }}>{company.sector}</span>
         </div>
       </div>
 
       {/* ESG Score */}
       <div style={{ marginBottom: 12 }}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-          <span style={{ fontSize: 11, color: "#475569", textTransform: "uppercase", letterSpacing: "0.08em" }}>ESG Score</span>
-          <span style={{ fontSize: 14, fontWeight: 600, color: "#e2e8f0" }}>{company.score}</span>
+          <span style={{ fontSize: 13, color: "#475569", textTransform: "uppercase", letterSpacing: "0.08em" }}>ESG Score</span>
+          <span style={{ fontSize: 16, fontWeight: 600, color: "#e2e8f0" }}>{company.score}</span>
         </div>
         <ScoreBar value={company.score} color={sectorColor} />
       </div>
@@ -239,18 +239,18 @@ function CompanyCard({ company, onClick, selected }: { company: typeof COMPANIES
           { label: "Renew.", value: company.renewableShare, unit: "%" },
         ].map((m) => (
           <div key={m.label} style={{ background: "#060608", border: "1px solid #1a1a2e", borderRadius: 6, padding: "7px 9px" }}>
-            <div style={{ fontSize: 10, color: "#334155", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>{m.label}</div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#94a3b8" }}>{m.value}<span style={{ fontSize: 10, color: "#334155", marginLeft: 2 }}>{m.unit}</span></div>
+            <div style={{ fontSize: 12, color: "#334155", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>{m.label}</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "#94a3b8" }}>{m.value}<span style={{ fontSize: 12, color: "#334155", marginLeft: 2 }}>{m.unit}</span></div>
           </div>
         ))}
       </div>
 
       {/* Principles */}
       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-        <span style={{ fontSize: 12, color: "#4ade80" }}>✓ {company.principles.compliant}</span>
-        <span style={{ fontSize: 12, color: "#f59e0b" }}>~ {company.principles.partial}</span>
-        <span style={{ fontSize: 12, color: "#ef4444" }}>✕ {company.principles.violated}</span>
-        <span style={{ fontSize: 12, color: "#334155" }}>BRSR principles</span>
+        <span style={{ fontSize: 14, color: "#4ade80" }}>✓ {company.principles.compliant}</span>
+        <span style={{ fontSize: 14, color: "#f59e0b" }}>~ {company.principles.partial}</span>
+        <span style={{ fontSize: 14, color: "#ef4444" }}>✕ {company.principles.violated}</span>
+        <span style={{ fontSize: 14, color: "#334155" }}>BRSR principles</span>
       </div>
     </div>
   );
@@ -265,10 +265,10 @@ function DetailPanel({ company, onClose }: { company: typeof COMPANIES[0]; onClo
       <div style={{ padding: "22px 24px 18px", borderBottom: "1px solid #1e2030", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-            <span style={{ fontSize: 22, fontWeight: 700, color: "#e2e8f0" }}>{company.ticker}</span>
+            <span style={{ fontSize: 24, fontWeight: 700, color: "#e2e8f0" }}>{company.ticker}</span>
             <GradeChip grade={company.grade} />
           </div>
-          <div style={{ fontSize: 13, color: "#475569" }}>{company.name} · {company.fy}</div>
+          <div style={{ fontSize: 15, color: "#475569" }}>{company.name} · {company.fy}</div>
         </div>
         <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#475569", padding: 4 }}>
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
@@ -278,15 +278,15 @@ function DetailPanel({ company, onClose }: { company: typeof COMPANIES[0]; onClo
       <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
         {/* Score gauge */}
         <div style={{ background: "#0f1117", border: "1px solid #1e2030", borderRadius: 10, padding: "18px", marginBottom: 18, textAlign: "center" }}>
-          <div style={{ fontSize: 52, fontWeight: 800, color: sectorColor, lineHeight: 1, marginBottom: 5 }}>{company.score}</div>
-          <div style={{ fontSize: 12, color: "#475569", textTransform: "uppercase", letterSpacing: "0.1em" }}>ESG Score / 100</div>
+          <div style={{ fontSize: 56, fontWeight: 800, color: sectorColor, lineHeight: 1, marginBottom: 5 }}>{company.score}</div>
+          <div style={{ fontSize: 14, color: "#475569", textTransform: "uppercase", letterSpacing: "0.1em" }}>ESG Score / 100</div>
           <div style={{ marginTop: 14 }}>
             <ScoreBar value={company.score} color={sectorColor} />
           </div>
         </div>
 
         {/* Metrics */}
-        <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.1em", color: "#334155", marginBottom: 10 }}>Key Metrics</div>
+        <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.1em", color: "#334155", marginBottom: 10 }}>Key Metrics</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 18 }}>
           {[
             { label: "GHG Emissions", value: `${company.ghg} Mt CO₂e`, sub: "Scope 1+2" },
@@ -297,28 +297,28 @@ function DetailPanel({ company, onClose }: { company: typeof COMPANIES[0]; onClo
             { label: "Trend", value: company.trend === "up" ? "↑ Improving" : company.trend === "down" ? "↓ Declining" : "→ Stable", sub: "YoY" },
           ].map((m) => (
             <div key={m.label} style={{ background: "#060608", border: "1px solid #1a1a2e", borderRadius: 8, padding: "11px 13px" }}>
-              <div style={{ fontSize: 10, color: "#334155", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>{m.label}</div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: "#e2e8f0", marginBottom: 3 }}>{m.value}</div>
-              <div style={{ fontSize: 11, color: "#334155" }}>{m.sub}</div>
+              <div style={{ fontSize: 12, color: "#334155", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>{m.label}</div>
+              <div style={{ fontSize: 17, fontWeight: 600, color: "#e2e8f0", marginBottom: 3 }}>{m.value}</div>
+              <div style={{ fontSize: 13, color: "#334155" }}>{m.sub}</div>
             </div>
           ))}
         </div>
 
         {/* BRSR Principles */}
-        <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.1em", color: "#334155", marginBottom: 10 }}>BRSR Compliance (9 Principles)</div>
+        <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.1em", color: "#334155", marginBottom: 10 }}>BRSR Compliance (9 Principles)</div>
         <div style={{ background: "#0f1117", border: "1px solid #1e2030", borderRadius: 10, padding: "16px 18px", marginBottom: 18 }}>
           <div style={{ display: "flex", gap: 20, marginBottom: 12 }}>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 26, fontWeight: 700, color: "#4ade80" }}>{company.principles.compliant}</div>
-              <div style={{ fontSize: 11, color: "#475569" }}>Compliant</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: "#4ade80" }}>{company.principles.compliant}</div>
+              <div style={{ fontSize: 13, color: "#475569" }}>Compliant</div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 26, fontWeight: 700, color: "#f59e0b" }}>{company.principles.partial}</div>
-              <div style={{ fontSize: 11, color: "#475569" }}>Partial</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: "#f59e0b" }}>{company.principles.partial}</div>
+              <div style={{ fontSize: 13, color: "#475569" }}>Partial</div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 26, fontWeight: 700, color: "#ef4444" }}>{company.principles.violated}</div>
-              <div style={{ fontSize: 11, color: "#475569" }}>Violated</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: "#ef4444" }}>{company.principles.violated}</div>
+              <div style={{ fontSize: 13, color: "#475569" }}>Violated</div>
             </div>
           </div>
           <div style={{ display: "flex", gap: 2 }}>
@@ -333,19 +333,19 @@ function DetailPanel({ company, onClose }: { company: typeof COMPANIES[0]; onClo
         </div>
 
         {/* Highlights */}
-        <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.1em", color: "#334155", marginBottom: 10 }}>ESG Highlights</div>
+        <div style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.1em", color: "#334155", marginBottom: 10 }}>ESG Highlights</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 26 }}>
           {company.highlights.map((h) => (
             <div key={h} style={{ display: "flex", alignItems: "center", gap: 9, background: "#0f1117", border: "1px solid #1e2030", borderRadius: 7, padding: "10px 13px" }}>
               <div style={{ width: 5, height: 5, borderRadius: "50%", background: sectorColor, flexShrink: 0 }} />
-              <span style={{ fontSize: 13, color: "#94a3b8" }}>{h}</span>
+              <span style={{ fontSize: 15, color: "#94a3b8" }}>{h}</span>
             </div>
           ))}
         </div>
 
         {/* Research CTA */}
         <Link href="/research" style={{ textDecoration: "none" }}>
-          <button style={{ width: "100%", padding: "13px", background: "linear-gradient(135deg,#6366f1,#22d3ee)", border: "none", borderRadius: 9, cursor: "pointer", fontSize: 14, fontWeight: 600, color: "white", letterSpacing: "0.01em" }}>
+          <button style={{ width: "100%", padding: "13px", background: "linear-gradient(135deg,#6366f1,#22d3ee)", border: "none", borderRadius: 9, cursor: "pointer", fontSize: 16, fontWeight: 600, color: "white", letterSpacing: "0.01em" }}>
             Deep Research with AI →
           </button>
         </Link>
@@ -386,9 +386,9 @@ export default function DashboardPage() {
             <div style={{ width: 28, height: 28, borderRadius: 6, background: "linear-gradient(135deg,#6366f1,#22d3ee)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 12L6 4l4 6 2-3 2 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </div>
-            <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em" }}>BRSR Analyst</span>
+            <span style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.01em" }}>BRSR Analyst</span>
           </div>
-          <p style={{ fontSize: 12, color: "#334155", margin: 0 }}>ESG Intelligence for Investors</p>
+          <p style={{ fontSize: 14, color: "#334155", margin: 0 }}>ESG Intelligence for Investors</p>
         </div>
 
         {/* Nav */}
@@ -400,7 +400,7 @@ export default function DashboardPage() {
           ].map((item) => (
             <div
               key={item.label}
-              style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 11px", borderRadius: 7, background: item.active ? "#1e2030" : "transparent", cursor: "pointer", fontSize: 13, color: item.active ? "#e2e8f0" : "#475569" }}
+              style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 11px", borderRadius: 7, background: item.active ? "#1e2030" : "transparent", cursor: "pointer", fontSize: 15, color: item.active ? "#e2e8f0" : "#475569" }}
             >
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                 <path d={item.icon} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -411,7 +411,7 @@ export default function DashboardPage() {
         </div>
 
         <div style={{ marginTop: 24 }}>
-          <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: "#1e2030", marginBottom: 10 }}>Sectors</div>
+          <div style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: "0.1em", color: "#1e2030", marginBottom: 10 }}>Sectors</div>
           {Object.entries(SECTOR_STATS).map(([s, info]) => (
             <div
               key={s}
@@ -419,7 +419,7 @@ export default function DashboardPage() {
               style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 0", cursor: "pointer" }}
             >
               <div style={{ width: 7, height: 7, borderRadius: "50%", background: info.color, flexShrink: 0 }} />
-              <span style={{ fontSize: 12, color: sector === s ? "#e2e8f0" : "#475569" }}>{s}</span>
+              <span style={{ fontSize: 14, color: sector === s ? "#e2e8f0" : "#475569" }}>{s}</span>
             </div>
           ))}
         </div>
@@ -431,8 +431,8 @@ export default function DashboardPage() {
         {/* Header */}
         <header style={{ borderBottom: "1px solid #1e2030", padding: "16px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: "-0.02em" }}>ESG Dashboard</h1>
-            <p style={{ margin: 0, fontSize: 13, color: "#475569" }}>FY2023 · BRSR disclosures · {COMPANIES.length} companies</p>
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em" }}>ESG Dashboard</h1>
+            <p style={{ margin: 0, fontSize: 15, color: "#475569" }}>FY2023 · BRSR disclosures · {COMPANIES.length} companies</p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {/* Search */}
@@ -442,13 +442,13 @@ export default function DashboardPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search companies…"
-                style={{ background: "none", border: "none", outline: "none", fontSize: 14, color: "#e2e8f0", width: 170, fontFamily: "inherit" }}
+                style={{ background: "none", border: "none", outline: "none", fontSize: 16, color: "#e2e8f0", width: 170, fontFamily: "inherit" }}
               />
             </div>
 
             {/* Research button */}
             <Link href="/research" style={{ textDecoration: "none" }}>
-              <button style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 16px", background: "linear-gradient(135deg,#6366f1,#22d3ee)", border: "none", borderRadius: 7, cursor: "pointer", fontSize: 14, fontWeight: 600, color: "white", letterSpacing: "0.01em" }}>
+              <button style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 16px", background: "linear-gradient(135deg,#6366f1,#22d3ee)", border: "none", borderRadius: 7, cursor: "pointer", fontSize: 16, fontWeight: 600, color: "white", letterSpacing: "0.01em" }}>
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 12L6 4l4 6 2-3 2 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 Research with AI
               </button>
@@ -466,10 +466,10 @@ export default function DashboardPage() {
             >
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
                 <div style={{ width: 7, height: 7, borderRadius: "50%", background: info.color }} />
-                <span style={{ fontSize: 12, color: info.color, fontWeight: 600 }}>{s}</span>
+                <span style={{ fontSize: 14, color: info.color, fontWeight: 600 }}>{s}</span>
               </div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: "#e2e8f0", marginBottom: 2 }}>{info.avgScore}</div>
-              <div style={{ fontSize: 11, color: "#334155" }}>avg ESG · {info.companies} co.</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: "#e2e8f0", marginBottom: 2 }}>{info.avgScore}</div>
+              <div style={{ fontSize: 13, color: "#334155" }}>avg ESG · {info.companies} co.</div>
             </div>
           ))}
         </div>
@@ -481,19 +481,19 @@ export default function DashboardPage() {
               <button
                 key={s}
                 onClick={() => setSector(s)}
-                style={{ fontSize: 13, padding: "5px 12px", borderRadius: 6, border: `1px solid ${sector === s ? "#6366f1" : "#1e2030"}`, background: sector === s ? "#1e1b4b" : "transparent", color: sector === s ? "#818cf8" : "#475569", cursor: "pointer", fontFamily: "inherit" }}
+                style={{ fontSize: 15, padding: "5px 12px", borderRadius: 6, border: `1px solid ${sector === s ? "#6366f1" : "#1e2030"}`, background: sector === s ? "#1e1b4b" : "transparent", color: sector === s ? "#818cf8" : "#475569", cursor: "pointer", fontFamily: "inherit" }}
               >
                 {s}
               </button>
             ))}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 13, color: "#334155" }}>Sort:</span>
+            <span style={{ fontSize: 15, color: "#334155" }}>Sort:</span>
             {(["score", "ghg", "renewable"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setSort(s)}
-                style={{ fontSize: 13, padding: "5px 12px", borderRadius: 6, border: `1px solid ${sort === s ? "#6366f1" : "#1e2030"}`, background: sort === s ? "#1e1b4b" : "transparent", color: sort === s ? "#818cf8" : "#475569", cursor: "pointer", fontFamily: "inherit" }}
+                style={{ fontSize: 15, padding: "5px 12px", borderRadius: 6, border: `1px solid ${sort === s ? "#6366f1" : "#1e2030"}`, background: sort === s ? "#1e1b4b" : "transparent", color: sort === s ? "#818cf8" : "#475569", cursor: "pointer", fontFamily: "inherit" }}
               >
                 {s === "score" ? "ESG Score" : s === "ghg" ? "Low GHG" : "Renewable"}
               </button>
@@ -504,7 +504,7 @@ export default function DashboardPage() {
         {/* Cards grid */}
         <div style={{ flex: 1, overflowY: "auto", padding: "22px 28px" }}>
           {filtered.length === 0 ? (
-            <div style={{ textAlign: "center", color: "#334155", paddingTop: 60, fontSize: 15 }}>No companies match your filter.</div>
+            <div style={{ textAlign: "center", color: "#334155", paddingTop: 60, fontSize: 17 }}>No companies match your filter.</div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
               {filtered.map((company) => (
