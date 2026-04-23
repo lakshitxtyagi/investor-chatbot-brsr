@@ -208,4 +208,5 @@ __marimo__/
 
 brsr-data/chunks/*
 .DS_Store
+indexing/weaviate_data/
 backend/model
