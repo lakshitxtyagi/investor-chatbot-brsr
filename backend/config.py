@@ -38,9 +38,9 @@ class Settings(BaseSettings):
     # Weaviate collections to search (must match schema class names)
     DEFAULT_COLLECTIONS: list[str] = ["NarrativeCollection", "NumericalCollection"]
 
-    # Gemini
-    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY")
-    GEMINI_MODEL: str = "gemini-2.5-flash-lite-preview-06-17"
+    # Groq
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY")
+    GROQ_MODEL: str = "llama-3.1-8b-instant"
 
 
 settings = Settings()

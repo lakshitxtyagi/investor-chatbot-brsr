@@ -12,8 +12,9 @@ from __future__ import annotations
 
 import os
 
-from google import genai
+from groq import Groq
 import weaviate
+from weaviate.classes.query import Filter
 from sentence_transformers import SentenceTransformer
 
 from config import settings
@@ -64,9 +65,7 @@ def resolve_collection_name(client: weaviate.WeaviateClient, requested: str) -> 
         _collection_name_map = {}
         try:
             collections = client.collections.list_all()
-            _collection_name_map = {
-                name.lower(): name for name in collections.keys()
-            }
+            _collection_name_map = {name.lower(): name for name in collections.keys()}
         except Exception as exc:
             print(f"[RAG] Could not list collections for name resolution: {exc}")
 
@@ -77,12 +76,21 @@ def resolve_collection_name(client: weaviate.WeaviateClient, requested: str) -> 
 # Retrieval
 # ---------------------------------------------------------------------------
 
+
 def retrieve_chunks(
     query_vector: list[float],
     collection_name: str,
     top_k: int,
+    symbol: str | None = None,
 ) -> list[dict]:
-    """Return top_k objects from a Weaviate collection via near_vector search."""
+    """Return top_k objects from a Weaviate collection via near_vector search.
+
+    Args:
+        query_vector: Embedding of the search query.
+        collection_name: Weaviate collection to query.
+        top_k: Maximum number of results to return.
+        symbol: Optional NSE ticker symbol to scope results to one company.
+    """
     client = get_weaviate_client()
     resolved_collection_name = resolve_collection_name(client, collection_name)
 
@@ -95,10 +103,13 @@ def retrieve_chunks(
         )
         return []
 
+    symbol_filter = Filter.by_property("symbol").equal(symbol) if symbol else None
+
     try:
         response = collection.query.near_vector(
             near_vector=query_vector,
             limit=top_k,
+            filters=symbol_filter,
             return_metadata=["distance"],
         )
     except Exception as exc:
@@ -121,9 +132,7 @@ def retrieve_chunks(
                 "collection": resolved_collection_name,
                 "score": score,
                 "metadata": {
-                    k: v
-                    for k, v in props.items()
-                    if k not in ("chunk_id", "text")
+                    k: v for k, v in props.items() if k not in ("chunk_id", "text")
                 },
             }
         )
@@ -135,6 +144,7 @@ def retrieve_chunks(
 # Generation
 # ---------------------------------------------------------------------------
 
+
 def build_context(chunks: list[dict]) -> str:
     parts = []
     for i, c in enumerate(chunks, 1):
@@ -143,38 +153,42 @@ def build_context(chunks: list[dict]) -> str:
             for k, v in c["metadata"].items()
             if v and k not in ("strategy", "source_file")
         )
-        parts.append(
-            f"[{i}] Collection: {c['collection']} | {meta_str}\n{c['text']}"
-        )
+        parts.append(f"[{i}] Collection: {c['collection']} | {meta_str}\n{c['text']}")
     return "\n\n---\n\n".join(parts)
 
 
-def call_gemini(query: str, context: str) -> str:
-    client = genai.Client(api_key=settings.GEMINI_API_KEY)
+def call_groq(query: str, context: str) -> str:
+    client = Groq(api_key=settings.GROQ_API_KEY)
 
-    prompt = f"""You are an expert analyst for Business Responsibility and Sustainability Reports (BRSR).
-Use ONLY the retrieved context below to answer the user's question.
-If the context does not contain enough information, say so clearly.
-Be precise, cite company names and financial years when available.
-
-=== RETRIEVED CONTEXT ===
-{context}
-
-=== USER QUESTION ===
-{query}
-
-=== ANSWER ==="""
-
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=prompt,
+    response = client.chat.completions.create(
+        model=settings.GROQ_MODEL,
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are an expert analyst for Business Responsibility and Sustainability Reports (BRSR). "
+                    "Use ONLY the retrieved context provided by the user to answer questions. "
+                    "If the context does not contain enough information, say so clearly. "
+                    "Be precise and cite company names and financial years when available."
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"=== RETRIEVED CONTEXT ===\n{context}\n\n"
+                    f"=== USER QUESTION ===\n{query}"
+                ),
+            },
+        ],
+        temperature=0.2,
     )
-    return response.text.strip()
+    return response.choices[0].message.content.strip()
 
 
 # ---------------------------------------------------------------------------
 # Public entry point
 # ---------------------------------------------------------------------------
+
 
 async def execute_rag(
     query: str,
@@ -201,7 +215,7 @@ async def execute_rag(
     # 4. Generate answer
     if top_chunks:
         context = build_context(top_chunks)
-        answer = call_gemini(query, context)
+        answer = call_groq(query, context)
     else:
         answer = "No relevant information found in the database for your query."
 

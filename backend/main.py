@@ -1,16 +1,19 @@
 """
 FastAPI RAG Backend
 ===================
-Exposes POST /execute — takes a user query, retrieves relevant chunks
-from Weaviate (narrativecollection + numericalcollection), and generates
-an answer using Gemini 2.5 Flash Lite.
+Exposes:
+  POST /execute        — standard RAG Q&A
+  POST /due-diligence  — multi-section due diligence report agent
 """
+
+from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from rag import execute_rag
+from due_diligence import execute_due_diligence
 
 app = FastAPI(
     title="BRSR RAG API",
@@ -51,6 +54,25 @@ class QueryResponse(BaseModel):
     total_chunks_retrieved: int
 
 
+class DueDiligenceRequest(BaseModel):
+    company: str
+    symbol: str | None = None  # if provided, scopes Weaviate queries to this symbol
+
+
+class SectionResult(BaseModel):
+    title: str
+    chunk_count: int
+    sources: list[SourceChunk]
+
+
+class DueDiligenceResponse(BaseModel):
+    company: str
+    symbol: str | None = None
+    report_markdown: str
+    sections: list[SectionResult]
+    total_sources: int
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
@@ -71,6 +93,19 @@ async def execute(request: QueryRequest):
         collections=request.collections,
     )
     return result
+
+
+@app.post("/due-diligence", response_model=DueDiligenceResponse)
+async def due_diligence(request: DueDiligenceRequest):
+    if not request.company.strip():
+        raise HTTPException(status_code=400, detail="company must not be empty")
+
+    result = await execute_due_diligence(
+        company=request.company.strip(),
+        symbol=request.symbol.strip().upper() if request.symbol else None,
+    )
+    return result
+
 
 if __name__ == "__main__":
     import uvicorn
