@@ -18,13 +18,63 @@ from rag import get_embedder, retrieve_chunks
 
 # ---------------------------------------------------------------------------
 # Token budget constants
-# Groq free tier: ~6k tokens/min for llama-3.1-8b-instant.
-# Target: keep total prompt under ~3,500 tokens.
-# At ~4 chars/token: 10 sections × 3 chunks × 120 chars ≈ 3,600 chars ≈ 900 tokens context
-# + prompt template ≈ 400 tokens → ~1,300 tokens input, ~1,500 tokens output = ~2,800 total.
+# Numeric chunks are section-level buckets (avg 29k chars); naive truncation
+# at 120 chars just cuts the header. We use keyword-based line extraction
+# instead, capping at _MAX_EXTRACTED_LINES relevant lines per chunk.
+# Total budget target: ~4,000 tokens input for Groq free tier.
 # ---------------------------------------------------------------------------
-_MAX_CHUNK_CHARS = 120    # characters kept per chunk in the prompt
-_MAX_CONTEXT_CHARS = 8_000  # hard cap on the full assembled context string
+_MAX_EXTRACTED_LINES = 20    # lines extracted per chunk for large chunks
+_MAX_LINE_CHARS = 120        # characters kept per extracted line
+_MAX_NARRATIVE_CHARS = 500   # chars kept for short narrative chunks
+_MAX_CONTEXT_CHARS = 14_000  # hard cap on the full assembled context string
+
+# Keywords per section used to extract relevant lines from large numeric chunks
+_SECTION_KEYWORDS: dict[str, list[str]] = {
+    "Company Profile & Operations": [
+        "cin", "corporate identity", "name of the company", "date of incorporation",
+        "registered office", "stock exchange", "nic code", "number of locations",
+        "address", "business activity", "type of organisation",
+    ],
+    "Financial Overview": [
+        "revenue", "turnover", "paid-up capital", "net worth", "export",
+        "sales", "income from operations", "total income", "paid up",
+    ],
+    "Workforce & Diversity": [
+        "total number of employee", "permanent employee", "contractual",
+        "female", "male", "differently abled", "wages", "turnover rate",
+        "worker", "headcount",
+    ],
+    "Health, Safety & Training": [
+        "fatali", "injur", "lost time", "safety incident", "training",
+        "health and safety", "near miss", "rehab",
+    ],
+    "Environmental — GHG & Energy": [
+        "scope 1", "scope 2", "scope 3", "greenhouse gas", "ghg",
+        "energy consumption", "renewable", "non-renewable", "energy intensity",
+        "emission",
+    ],
+    "Environmental — Water & Waste": [
+        "water withdrawal", "water consumption", "water discharge",
+        "waste generated", "waste recycled", "waste disposed", "water intensity",
+        "effluent",
+    ],
+    "Governance & Ethics": [
+        "complaint", "penalt", "fine", "conviction", "anti-corruption",
+        "board", "transparency", "whistle", "bribery",
+    ],
+    "Consumer Responsibility": [
+        "consumer complaint", "data breach", "cybersecurity", "privacy",
+        "product recall", "customer grievance", "cyber",
+    ],
+    "Stakeholder Engagement & CSR": [
+        "csr", "community", "stakeholder", "grievance", "csr spend",
+        "social impact", "inclusive",
+    ],
+    "Policy & Sustainability Disclosures": [
+        "policy", "sustainability", "esg", "commitment", "certification",
+        "standard", "framework", "disclosure",
+    ],
+}
 
 # ---------------------------------------------------------------------------
 # Report section definitions
@@ -98,23 +148,62 @@ REPORT_SECTIONS: list[dict] = [
 # Context builder (per section)
 # ---------------------------------------------------------------------------
 
+def _extract_relevant_lines(text: str, section_title: str) -> str:
+    """For large numeric section chunks, extract only lines matching section keywords."""
+    keywords = _SECTION_KEYWORDS.get(section_title, [])
+
+    all_lines = text.splitlines()
+    # Always keep the header line (company / FY info)
+    header = all_lines[0] if all_lines else ""
+
+    scored: list[tuple[int, str]] = []
+    for line in all_lines[1:]:
+        lower = line.lower()
+        score = sum(1 for kw in keywords if kw in lower)
+        if score > 0:
+            # Truncate individual long lines
+            if len(line) > _MAX_LINE_CHARS:
+                line = line[:_MAX_LINE_CHARS] + "…"
+            scored.append((score, line))
+
+    # Sort by relevance, take top lines
+    scored.sort(key=lambda x: x[0], reverse=True)
+    top_lines = [line for _, line in scored[:_MAX_EXTRACTED_LINES]]
+
+    if not top_lines:
+        # Fallback: just first few lines of the chunk
+        fallback = "\n".join(all_lines[1:6])
+        return f"{header}\n{fallback}"
+
+    return f"{header}\n" + "\n".join(top_lines)
+
+
 def _build_section_context(section_title: str, chunks: list[dict]) -> str:
     if not chunks:
-        return f"[{section_title}]: no data"
+        return f"[{section_title}]: no data retrieved"
 
-    lines = [f"[{section_title}]"]
+    parts = [f"[{section_title}]"]
     for c in chunks:
         meta = c.get("metadata", {})
-        # Only keep the most useful metadata fields
         useful = {k: v for k, v in meta.items()
-                  if v and k in ("symbol", "companyName", "period", "element", "chunk_type")}
-        if useful:
-            lines.append(", ".join(f"{k}={v}" for k, v in useful.items()))
+                  if v and k in ("symbol", "companyName", "period", "row_type")}
+        meta_str = ", ".join(f"{k}={v}" for k, v in useful.items())
+        if meta_str:
+            parts.append(meta_str)
+
         text = c["text"]
-        if len(text) > _MAX_CHUNK_CHARS:
-            text = text[:_MAX_CHUNK_CHARS] + "…"
-        lines.append(text)
-    return "\n".join(lines)
+        row_type = meta.get("row_type", "")
+
+        if row_type == "numeric" and len(text) > _MAX_NARRATIVE_CHARS:
+            # Large numeric section buckets: extract relevant lines
+            text = _extract_relevant_lines(text, section_title)
+        elif len(text) > _MAX_NARRATIVE_CHARS:
+            # Narrative chunks: plain truncation is fine
+            text = text[:_MAX_NARRATIVE_CHARS] + "…"
+
+        parts.append(text)
+
+    return "\n".join(parts)
 
 
 # ---------------------------------------------------------------------------
