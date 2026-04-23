@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from rag import execute_rag
 from due_diligence import execute_due_diligence
 from compare import compare_companies, list_symbols
+from scoring import get_companies_cached, score_all_companies
 
 app = FastAPI(
     title="BRSR RAG API",
@@ -140,6 +141,35 @@ class CompareResponse(BaseModel):
     company1: CompanyMeta
     company2: CompanyMeta
     sections: list[CompareSection]
+
+
+@app.get("/companies")
+def get_companies(sector: str | None = None, limit: int = 500):
+    data = get_companies_cached()
+    if sector and sector.lower() not in ("all", ""):
+        data = [c for c in data if c.get("sector", "") == sector]
+    return data[:limit]
+
+
+@app.get("/companies/sectors")
+def get_sectors():
+    data = get_companies_cached()
+    sectors = sorted({c.get("sector", "Unclassified") for c in data})
+    return {"sectors": sectors}
+
+
+@app.post("/companies/rebuild")
+def rebuild_companies():
+    """Force-recompute scores for all companies and overwrite the cache."""
+    results = score_all_companies()
+    from scoring import _CACHE_FILE
+    import json
+    with open(_CACHE_FILE, "w", encoding="utf-8") as f:
+        json.dump(results, f, ensure_ascii=False)
+    # Update in-memory cache
+    import scoring as _sc
+    _sc._CACHE = results
+    return {"status": "ok", "companies": len(results)}
 
 
 @app.get("/compare/symbols")
