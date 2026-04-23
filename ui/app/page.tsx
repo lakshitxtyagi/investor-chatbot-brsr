@@ -1,361 +1,536 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { useState } from "react";
+import Link from "next/link";
 
-type Source = {
-  chunk_id: string;
-  text: string;
-  collection: string;
-  score: number;
-  metadata: Record<string, string | number>;
-};
+// ─── Static mock data ────────────────────────────────────────────────────────
 
-type Message = {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  sources?: Source[];
-  loading?: boolean;
-};
+const SECTORS = ["All", "Manufacturing", "IT & Software", "Energy", "FMCG", "Financial"];
 
-const SUGGESTED = [
-  "What are the water consumption metrics for FY2023?",
-  "Which companies have the highest GHG emissions?",
-  "Show ESG disclosures for Infosys in FY2023",
-  "What are the key BRSR principle violations?",
+const COMPANIES = [
+  {
+    id: "tcs",
+    name: "Tata Consultancy Services",
+    ticker: "TCS",
+    sector: "IT & Software",
+    score: 87,
+    grade: "A",
+    ghg: 1.2,
+    water: 3.4,
+    energy: 12.1,
+    waste: 0.8,
+    renewableShare: 68,
+    trend: "up",
+    fy: "FY2023",
+    principles: { compliant: 8, partial: 1, violated: 0 },
+    highlights: ["Net-zero target 2030", "68% renewable energy", "ISO 14001 certified"],
+  },
+  {
+    id: "infosys",
+    name: "Infosys",
+    ticker: "INFY",
+    sector: "IT & Software",
+    score: 91,
+    grade: "A+",
+    ghg: 0.9,
+    water: 2.8,
+    energy: 9.4,
+    waste: 0.5,
+    renewableShare: 82,
+    trend: "up",
+    fy: "FY2023",
+    principles: { compliant: 9, partial: 0, violated: 0 },
+    highlights: ["Carbon neutral since 2020", "82% renewable energy", "Water positive"],
+  },
+  {
+    id: "wipro",
+    name: "Wipro",
+    ticker: "WIPRO",
+    sector: "IT & Software",
+    score: 83,
+    grade: "A-",
+    ghg: 1.5,
+    water: 4.1,
+    energy: 14.2,
+    waste: 1.1,
+    renewableShare: 55,
+    trend: "up",
+    fy: "FY2023",
+    principles: { compliant: 8, partial: 1, violated: 0 },
+    highlights: ["Net-zero target 2040", "55% renewable energy", "Zero waste to landfill"],
+  },
+  {
+    id: "tatasteel",
+    name: "Tata Steel",
+    ticker: "TATASTEEL",
+    sector: "Manufacturing",
+    score: 64,
+    grade: "B",
+    ghg: 38.4,
+    water: 22.6,
+    energy: 187.3,
+    waste: 14.2,
+    renewableShare: 18,
+    trend: "neutral",
+    fy: "FY2023",
+    principles: { compliant: 5, partial: 3, violated: 1 },
+    highlights: ["Targeting 30% emissions cut by 2030", "18% renewable energy", "Blast furnace transition plan"],
+  },
+  {
+    id: "jsw",
+    name: "JSW Steel",
+    ticker: "JSWSTEEL",
+    sector: "Manufacturing",
+    score: 58,
+    grade: "B-",
+    ghg: 42.1,
+    water: 28.3,
+    energy: 204.7,
+    waste: 18.6,
+    renewableShare: 12,
+    trend: "down",
+    fy: "FY2023",
+    principles: { compliant: 4, partial: 4, violated: 1 },
+    highlights: ["Scrap-based EAF expansion", "12% renewable energy", "Water recycling upgrades"],
+  },
+  {
+    id: "reliance",
+    name: "Reliance Industries",
+    ticker: "RELIANCE",
+    sector: "Energy",
+    score: 72,
+    grade: "B+",
+    ghg: 68.2,
+    water: 41.5,
+    energy: 312.8,
+    waste: 22.1,
+    renewableShare: 9,
+    trend: "up",
+    fy: "FY2023",
+    principles: { compliant: 6, partial: 2, violated: 1 },
+    highlights: ["₹75,000 Cr green energy investment", "New Energy business launch", "Solar giga-factory"],
+  },
+  {
+    id: "hul",
+    name: "HUL",
+    ticker: "HINDUNILVR",
+    sector: "FMCG",
+    score: 79,
+    grade: "B+",
+    ghg: 2.1,
+    water: 5.8,
+    energy: 18.4,
+    waste: 0.6,
+    renewableShare: 44,
+    trend: "up",
+    fy: "FY2023",
+    principles: { compliant: 7, partial: 2, violated: 0 },
+    highlights: ["Plastic-neutral target", "44% renewable energy", "Sustainable sourcing 95%"],
+  },
+  {
+    id: "hdfc",
+    name: "HDFC Bank",
+    ticker: "HDFCBANK",
+    sector: "Financial",
+    score: 76,
+    grade: "B+",
+    ghg: 0.4,
+    water: 0.9,
+    energy: 3.2,
+    waste: 0.1,
+    renewableShare: 31,
+    trend: "neutral",
+    fy: "FY2023",
+    principles: { compliant: 7, partial: 2, violated: 0 },
+    highlights: ["Green building certified HQ", "31% renewable energy", "ESG-linked lending"],
+  },
 ];
 
-function MarkdownMessage({ content }: { content: string }) {
+const SECTOR_STATS = {
+  "IT & Software": { avgScore: 87, avgGhg: 1.2, color: "#6366f1", companies: 3 },
+  Manufacturing: { avgScore: 61, avgGhg: 40.3, color: "#f59e0b", companies: 2 },
+  Energy: { avgScore: 72, avgGhg: 68.2, color: "#ef4444", companies: 1 },
+  FMCG: { avgScore: 79, avgGhg: 2.1, color: "#22c55e", companies: 1 },
+  Financial: { avgScore: 76, avgGhg: 0.4, color: "#22d3ee", companies: 1 },
+};
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function GradeChip({ grade }: { grade: string }) {
+  const colors: Record<string, { bg: string; color: string }> = {
+    "A+": { bg: "#052e16", color: "#4ade80" },
+    A: { bg: "#052e16", color: "#86efac" },
+    "A-": { bg: "#052e16", color: "#bbf7d0" },
+    "B+": { bg: "#1e293b", color: "#93c5fd" },
+    B: { bg: "#1e293b", color: "#bfdbfe" },
+    "B-": { bg: "#2d1b00", color: "#fbbf24" },
+    C: { bg: "#2d0a0a", color: "#f87171" },
+  };
+  const c = colors[grade] || { bg: "#1e2030", color: "#94a3b8" };
   return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
-      components={{
-        h1: ({ children }) => (
-          <h1 style={{ margin: "0 0 10px", fontSize: 18, fontWeight: 600, color: "#e2e8f0" }}>{children}</h1>
-        ),
-        h2: ({ children }) => (
-          <h2 style={{ margin: "0 0 9px", fontSize: 16, fontWeight: 600, color: "#e2e8f0" }}>{children}</h2>
-        ),
-        h3: ({ children }) => (
-          <h3 style={{ margin: "0 0 8px", fontSize: 14, fontWeight: 600, color: "#e2e8f0" }}>{children}</h3>
-        ),
-        p: ({ children }) => (
-          <p style={{ margin: "0 0 10px", color: "#cbd5e1" }}>{children}</p>
-        ),
-        ul: ({ children }) => (
-          <ul style={{ margin: "0 0 10px", paddingLeft: 20, color: "#cbd5e1" }}>{children}</ul>
-        ),
-        ol: ({ children }) => (
-          <ol style={{ margin: "0 0 10px", paddingLeft: 20, color: "#cbd5e1" }}>{children}</ol>
-        ),
-        li: ({ children }) => (
-          <li style={{ marginBottom: 4 }}>{children}</li>
-        ),
-        strong: ({ children }) => (
-          <strong style={{ color: "#f8fafc", fontWeight: 600 }}>{children}</strong>
-        ),
-        em: ({ children }) => (
-          <em style={{ color: "#e2e8f0" }}>{children}</em>
-        ),
-        code: ({ children }) => (
-          <code style={{ background: "#0a0a0f", border: "1px solid #1e2030", borderRadius: 4, padding: "1px 5px", fontSize: "0.92em", color: "#c4b5fd" }}>
-            {children}
-          </code>
-        ),
-        blockquote: ({ children }) => (
-          <blockquote style={{ margin: "0 0 10px", paddingLeft: 12, borderLeft: "2px solid #334155", color: "#94a3b8" }}>
-            {children}
-          </blockquote>
-        ),
-      }}
-    >
-      {content}
-    </ReactMarkdown>
+    <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 5, background: c.bg, color: c.color, letterSpacing: "0.04em" }}>
+      {grade}
+    </span>
   );
 }
 
-export default function Page() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [activeSource, setActiveSource] = useState<Message | null>(null);
-  const [loading, setLoading] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+function TrendIcon({ trend }: { trend: string }) {
+  if (trend === "up") return <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 9L6 3l4 6" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+  if (trend === "down") return <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 3L6 9l4-6" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+  return <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" /></svg>;
+}
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+function ScoreBar({ value, max = 100, color = "#6366f1" }: { value: number; max?: number; color?: string }) {
+  return (
+    <div style={{ width: "100%", height: 3, background: "#1e2030", borderRadius: 2, overflow: "hidden" }}>
+      <div style={{ width: `${(value / max) * 100}%`, height: "100%", background: color, borderRadius: 2, transition: "width 0.6s ease" }} />
+    </div>
+  );
+}
 
-  const send = async (query: string) => {
-    if (!query.trim() || loading) return;
-    setInput("");
-    setActiveSource(null);
+function CompanyCard({ company, onClick, selected }: { company: typeof COMPANIES[0]; onClick: () => void; selected: boolean }) {
+  const sectorColor = SECTOR_STATS[company.sector as keyof typeof SECTOR_STATS]?.color ?? "#6366f1";
 
-    const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: query };
-    const loadingMsg: Message = { id: crypto.randomUUID(), role: "assistant", content: "", loading: true };
-    setMessages((prev) => [...prev, userMsg, loadingMsg]);
-    setLoading(true);
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        background: selected ? "#0f1117" : "#0a0a0f",
+        border: `1px solid ${selected ? "#6366f1" : "#1e2030"}`,
+        borderRadius: 10,
+        padding: "16px",
+        cursor: "pointer",
+        transition: "all 0.15s ease",
+        position: "relative",
+        overflow: "hidden",
+      }}
+      onMouseEnter={(e) => { if (!selected) e.currentTarget.style.borderColor = "#334155"; }}
+      onMouseLeave={(e) => { if (!selected) e.currentTarget.style.borderColor = "#1e2030"; }}
+    >
+      {/* Top row */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0" }}>{company.ticker}</span>
+            <TrendIcon trend={company.trend} />
+          </div>
+          <div style={{ fontSize: 11, color: "#475569", maxWidth: 160, lineHeight: 1.3 }}>{company.name}</div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+          <GradeChip grade={company.grade} />
+          <span style={{ fontSize: 10, color: sectorColor, background: `${sectorColor}18`, padding: "2px 6px", borderRadius: 4 }}>{company.sector}</span>
+        </div>
+      </div>
 
-    try {
-      const res = await fetch("http://localhost:8000/execute", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, top_k: 5 }),
-      });
-      const data = await res.json();
+      {/* ESG Score */}
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+          <span style={{ fontSize: 10, color: "#475569", textTransform: "uppercase", letterSpacing: "0.08em" }}>ESG Score</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "#e2e8f0" }}>{company.score}</span>
+        </div>
+        <ScoreBar value={company.score} color={sectorColor} />
+      </div>
 
-      const assistantMsg: Message = {
-        id: loadingMsg.id,
-        role: "assistant",
-        content: data.answer,
-        sources: data.sources,
-      };
-      setMessages((prev) => prev.map((m) => (m.id === loadingMsg.id ? assistantMsg : m)));
-      setActiveSource(assistantMsg);
-    } catch {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === loadingMsg.id
-            ? { ...m, loading: false, content: "Failed to reach the backend. Is it running on port 8000?" }
-            : m
-        )
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+      {/* Metrics row */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+        {[
+          { label: "GHG", value: company.ghg, unit: "Mt" },
+          { label: "Water", value: company.water, unit: "Mm³" },
+          { label: "Renew.", value: company.renewableShare, unit: "%" },
+        ].map((m) => (
+          <div key={m.label} style={{ background: "#060608", border: "1px solid #1a1a2e", borderRadius: 6, padding: "6px 8px" }}>
+            <div style={{ fontSize: 9, color: "#334155", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 2 }}>{m.label}</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#94a3b8" }}>{m.value}<span style={{ fontSize: 9, color: "#334155", marginLeft: 1 }}>{m.unit}</span></div>
+          </div>
+        ))}
+      </div>
 
-  const handleKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      send(input);
-    }
-  };
+      {/* Principles */}
+      <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
+        <span style={{ fontSize: 10, color: "#4ade80" }}>✓ {company.principles.compliant}</span>
+        <span style={{ fontSize: 10, color: "#f59e0b" }}>~ {company.principles.partial}</span>
+        <span style={{ fontSize: 10, color: "#ef4444" }}>✕ {company.principles.violated}</span>
+        <span style={{ fontSize: 10, color: "#334155" }}>BRSR principles</span>
+      </div>
+    </div>
+  );
+}
 
-  const scoreColor = (score: number) => {
-    if (score >= 0.85) return "#22c55e";
-    if (score >= 0.7) return "#f59e0b";
-    return "#94a3b8";
-  };
+function DetailPanel({ company, onClose }: { company: typeof COMPANIES[0]; onClose: () => void }) {
+  const sectorColor = SECTOR_STATS[company.sector as keyof typeof SECTOR_STATS]?.color ?? "#6366f1";
 
-  const collectionLabel = (col: string) =>
-    col.toLowerCase().includes("narrative") ? "Narrative" : "Numeric";
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      {/* Header */}
+      <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #1e2030", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 18, fontWeight: 700, color: "#e2e8f0" }}>{company.ticker}</span>
+            <GradeChip grade={company.grade} />
+          </div>
+          <div style={{ fontSize: 12, color: "#475569" }}>{company.name} · {company.fy}</div>
+        </div>
+        <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#475569", padding: 4 }}>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+        </button>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
+        {/* Score gauge */}
+        <div style={{ background: "#0f1117", border: "1px solid #1e2030", borderRadius: 10, padding: "16px", marginBottom: 16, textAlign: "center" }}>
+          <div style={{ fontSize: 48, fontWeight: 800, color: sectorColor, lineHeight: 1, marginBottom: 4 }}>{company.score}</div>
+          <div style={{ fontSize: 11, color: "#475569", textTransform: "uppercase", letterSpacing: "0.1em" }}>ESG Score / 100</div>
+          <div style={{ marginTop: 12 }}>
+            <ScoreBar value={company.score} color={sectorColor} />
+          </div>
+        </div>
+
+        {/* Metrics */}
+        <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: "#334155", marginBottom: 10 }}>Key Metrics</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
+          {[
+            { label: "GHG Emissions", value: `${company.ghg} Mt CO₂e`, sub: "Scope 1+2" },
+            { label: "Water Consumed", value: `${company.water} Mm³`, sub: "Total intensity" },
+            { label: "Energy Used", value: `${company.energy} PJ`, sub: "Total" },
+            { label: "Waste Generated", value: `${company.waste} Mt`, sub: "Total" },
+            { label: "Renewable Mix", value: `${company.renewableShare}%`, sub: "Of total energy" },
+            { label: "Trend", value: company.trend === "up" ? "↑ Improving" : company.trend === "down" ? "↓ Declining" : "→ Stable", sub: "YoY" },
+          ].map((m) => (
+            <div key={m.label} style={{ background: "#060608", border: "1px solid #1a1a2e", borderRadius: 8, padding: "10px 12px" }}>
+              <div style={{ fontSize: 9, color: "#334155", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>{m.label}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#e2e8f0", marginBottom: 2 }}>{m.value}</div>
+              <div style={{ fontSize: 10, color: "#334155" }}>{m.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* BRSR Principles */}
+        <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: "#334155", marginBottom: 10 }}>BRSR Compliance (9 Principles)</div>
+        <div style={{ background: "#0f1117", border: "1px solid #1e2030", borderRadius: 10, padding: "14px 16px", marginBottom: 16 }}>
+          <div style={{ display: "flex", gap: 16, marginBottom: 10 }}>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: "#4ade80" }}>{company.principles.compliant}</div>
+              <div style={{ fontSize: 10, color: "#475569" }}>Compliant</div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: "#f59e0b" }}>{company.principles.partial}</div>
+              <div style={{ fontSize: 10, color: "#475569" }}>Partial</div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: "#ef4444" }}>{company.principles.violated}</div>
+              <div style={{ fontSize: 10, color: "#475569" }}>Violated</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 2 }}>
+            {Array.from({ length: 9 }).map((_, i) => {
+              const isCompliant = i < company.principles.compliant;
+              const isPartial = i < company.principles.compliant + company.principles.partial;
+              return (
+                <div key={i} style={{ flex: 1, height: 6, borderRadius: 2, background: isCompliant ? "#22c55e" : isPartial ? "#f59e0b" : "#ef4444" }} />
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Highlights */}
+        <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: "#334155", marginBottom: 10 }}>ESG Highlights</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 24 }}>
+          {company.highlights.map((h) => (
+            <div key={h} style={{ display: "flex", alignItems: "center", gap: 8, background: "#0f1117", border: "1px solid #1e2030", borderRadius: 7, padding: "8px 12px" }}>
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: sectorColor, flexShrink: 0 }} />
+              <span style={{ fontSize: 12, color: "#94a3b8" }}>{h}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Research CTA */}
+        <Link href="/research" style={{ textDecoration: "none" }}>
+          <button style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg,#6366f1,#22d3ee)", border: "none", borderRadius: 9, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "white", letterSpacing: "0.01em" }}>
+            Deep Research with AI →
+          </button>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Dashboard ───────────────────────────────────────────────────────────
+
+export default function DashboardPage() {
+  const [sector, setSector] = useState("All");
+  const [sort, setSort] = useState<"score" | "ghg" | "renewable">("score");
+  const [selected, setSelected] = useState<typeof COMPANIES[0] | null>(null);
+  const [search, setSearch] = useState("");
+
+  const filtered = COMPANIES
+    .filter((c) => sector === "All" || c.sector === sector)
+    .filter((c) =>
+      search === "" ||
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.ticker.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (sort === "score") return b.score - a.score;
+      if (sort === "ghg") return a.ghg - b.ghg;
+      if (sort === "renewable") return b.renewableShare - a.renewableShare;
+      return 0;
+    });
 
   return (
     <div style={{ display: "flex", height: "100vh", background: "#0a0a0f", color: "#e2e8f0", fontFamily: "var(--font-sans, DM Sans, sans-serif)", overflow: "hidden" }}>
 
-      {/* ── Left sidebar: branding ── */}
-      <aside style={{ width: 220, borderRight: "1px solid #1e2030", display: "flex", flexDirection: "column", padding: "28px 20px", flexShrink: 0 }}>
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 6, background: "linear-gradient(135deg,#6366f1,#22d3ee)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 12L6 4l4 6 2-3 2 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      {/* ── Sidebar ── */}
+      <aside style={{ width: 200, borderRight: "1px solid #1e2030", display: "flex", flexDirection: "column", padding: "24px 16px", flexShrink: 0 }}>
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <div style={{ width: 26, height: 26, borderRadius: 6, background: "linear-gradient(135deg,#6366f1,#22d3ee)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 12L6 4l4 6 2-3 2 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </div>
-            <span style={{ fontSize: 14, fontWeight: 500, letterSpacing: "-0.01em" }}>BRSR Analyst</span>
+            <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: "-0.01em" }}>BRSR Analyst</span>
           </div>
-          <p style={{ fontSize: 11, color: "#475569", margin: 0, lineHeight: 1.5 }}>ESG Intelligence<br />for Investors</p>
+          <p style={{ fontSize: 10, color: "#334155", margin: 0 }}>ESG Intelligence for Investors</p>
         </div>
 
-        <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "#334155", marginBottom: 10 }}>Collections</div>
-        {["narrativecollection", "numericalcollection"].map((c) => (
-          <div key={c} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0" }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", flexShrink: 0 }} />
-            <span style={{ fontSize: 12, color: "#64748b" }}>{collectionLabel(c)}</span>
-          </div>
-        ))}
+        {/* Nav */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: "auto" }}>
+          {[
+            { label: "Dashboard", icon: "M2 12L6 4l4 6 2-3 2 5", active: true },
+            { label: "BRSR Reports", icon: "M3 3h10v10H3zM3 7h10M7 3v10", active: false },
+            { label: "Alerts", icon: "M8 2a5 5 0 010 10A5 5 0 018 2zM8 14v1", active: false },
+          ].map((item) => (
+            <div
+              key={item.label}
+              style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 7, background: item.active ? "#1e2030" : "transparent", cursor: "pointer", fontSize: 12, color: item.active ? "#e2e8f0" : "#475569" }}
+            >
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                <path d={item.icon} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {item.label}
+            </div>
+          ))}
+        </div>
 
-        <div style={{ marginTop: "auto" }}>
-          <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "#334155", marginBottom: 10 }}>Model</div>
-          <div style={{ fontSize: 11, color: "#475569", lineHeight: 1.6 }}>
-            gemini-2.5-flash-lite<br />
-            all-MiniLM-L6-v2
-          </div>
+        <div style={{ marginTop: 24 }}>
+          <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "#1e2030", marginBottom: 10 }}>Sectors</div>
+          {Object.entries(SECTOR_STATS).map(([s, info]) => (
+            <div
+              key={s}
+              onClick={() => setSector(sector === s ? "All" : s)}
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 0", cursor: "pointer" }}
+            >
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: info.color, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: sector === s ? "#e2e8f0" : "#475569" }}>{s}</span>
+            </div>
+          ))}
         </div>
       </aside>
 
-      {/* ── Main chat ── */}
+      {/* ── Main ── */}
       <main style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+
         {/* Header */}
-        <header style={{ borderBottom: "1px solid #1e2030", padding: "16px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+        <header style={{ borderBottom: "1px solid #1e2030", padding: "14px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 15, fontWeight: 500, letterSpacing: "-0.01em" }}>BRSR Research Assistant</h1>
-            <p style={{ margin: 0, fontSize: 12, color: "#475569" }}>Ask about ESG metrics, sustainability disclosures, and principle compliance</p>
+            <h1 style={{ margin: 0, fontSize: 15, fontWeight: 600, letterSpacing: "-0.02em" }}>ESG Dashboard</h1>
+            <p style={{ margin: 0, fontSize: 11, color: "#475569" }}>FY2023 · BRSR disclosures · {COMPANIES.length} companies</p>
           </div>
-          {messages.length > 0 && (
-            <button
-              onClick={() => { setMessages([]); setActiveSource(null); }}
-              style={{ fontSize: 12, color: "#475569", background: "none", border: "1px solid #1e2030", borderRadius: 6, padding: "5px 12px", cursor: "pointer" }}
-            >
-              Clear chat
-            </button>
-          )}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* Search */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: "#0f1117", border: "1px solid #1e2030", borderRadius: 7, padding: "6px 10px" }}>
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4" stroke="#475569" strokeWidth="1.5" /><path d="M10 10l3 3" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" /></svg>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search companies…"
+                style={{ background: "none", border: "none", outline: "none", fontSize: 12, color: "#e2e8f0", width: 160, fontFamily: "inherit" }}
+              />
+            </div>
+
+            {/* Invest/Research button */}
+            <Link href="/research" style={{ textDecoration: "none" }}>
+              <button style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "linear-gradient(135deg,#6366f1,#22d3ee)", border: "none", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 600, color: "white", letterSpacing: "0.01em" }}>
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M2 12L6 4l4 6 2-3 2 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                Research with AI
+              </button>
+            </Link>
+          </div>
         </header>
 
-        {/* Messages */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px", display: "flex", flexDirection: "column", gap: 20 }}>
-          {messages.length === 0 && (
-            <div style={{ margin: "auto", maxWidth: 520, textAlign: "center" }}>
-              <div style={{ fontSize: 36, marginBottom: 12, opacity: 0.15 }}>
-                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style={{ display: "inline-block" }}>
-                  <rect width="48" height="48" rx="12" fill="#6366f1" fillOpacity="0.15" />
-                  <path d="M10 32L18 12l12 18 6-9 6 15" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+        {/* Sector overview strip */}
+        <div style={{ borderBottom: "1px solid #1e2030", padding: "12px 28px", display: "flex", gap: 12, flexShrink: 0, overflowX: "auto" }}>
+          {Object.entries(SECTOR_STATS).map(([s, info]) => (
+            <div
+              key={s}
+              onClick={() => setSector(sector === s ? "All" : s)}
+              style={{ flexShrink: 0, background: sector === s ? "#0f1117" : "transparent", border: `1px solid ${sector === s ? info.color : "#1e2030"}`, borderRadius: 8, padding: "8px 14px", cursor: "pointer", minWidth: 130, transition: "all 0.15s" }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: info.color }} />
+                <span style={{ fontSize: 10, color: info.color, fontWeight: 600 }}>{s}</span>
               </div>
-              <h2 style={{ fontSize: 20, fontWeight: 400, color: "#94a3b8", margin: "0 0 6px", letterSpacing: "-0.02em" }}>
-                What would you like to analyse?
-              </h2>
-              <p style={{ fontSize: 13, color: "#334155", margin: "0 0 28px" }}>
-                Query BRSR disclosures across narrative and numeric data
-              </p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                {SUGGESTED.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => send(s)}
-                    style={{ textAlign: "left", padding: "10px 14px", background: "#0f1117", border: "1px solid #1e2030", borderRadius: 8, cursor: "pointer", fontSize: 12, color: "#64748b", lineHeight: 1.5, transition: "border-color 0.15s", fontFamily: "inherit" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#6366f1")}
-                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1e2030")}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {messages.map((msg) => (
-            <div key={msg.id} style={{ display: "flex", gap: 12, alignItems: "flex-start", flexDirection: msg.role === "user" ? "row-reverse" : "row" }}>
-              {/* Avatar */}
-              <div style={{ width: 28, height: 28, borderRadius: msg.role === "user" ? 6 : 6, background: msg.role === "user" ? "#1e293b" : "linear-gradient(135deg,#6366f1,#22d3ee)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 2 }}>
-                {msg.role === "user"
-                  ? <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="#94a3b8" strokeWidth="1.5" /><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" /></svg>
-                  : <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 10L5 3l5 7 3-4.5L16 10" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                }
-              </div>
-
-              {/* Bubble */}
-              <div style={{ maxWidth: "78%", display: "flex", flexDirection: "column", gap: 6, alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
-                <div style={{ background: msg.role === "user" ? "#1e293b" : "#0f1117", border: `1px solid ${msg.role === "user" ? "#2d3748" : "#1e2030"}`, borderRadius: msg.role === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px", padding: "12px 16px", fontSize: 13.5, lineHeight: 1.7, color: msg.loading ? "#475569" : "#cbd5e1" }}>
-                  {msg.loading ? (
-                    <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                      {[0, 1, 2].map((i) => (
-                        <div key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: "#6366f1", animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />
-                      ))}
-                    </div>
-                  ) : msg.role === "assistant" ? (
-                    <MarkdownMessage content={msg.content} />
-                  ) : (
-                    msg.content
-                  )}
-                </div>
-
-                {msg.sources && msg.sources.length > 0 && (
-                  <button
-                    onClick={() => setActiveSource(activeSource?.id === msg.id ? null : msg)}
-                    style={{ fontSize: 11, color: "#6366f1", background: "none", border: "1px solid #312e81", borderRadius: 6, padding: "3px 10px", cursor: "pointer", fontFamily: "inherit" }}
-                  >
-                    {activeSource?.id === msg.id ? "Hide" : "View"} {msg.sources.length} sources
-                  </button>
-                )}
-              </div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: "#e2e8f0", marginBottom: 1 }}>{info.avgScore}</div>
+              <div style={{ fontSize: 10, color: "#334155" }}>avg ESG · {info.companies} co.</div>
             </div>
           ))}
-          <div ref={bottomRef} />
         </div>
 
-        {/* Input */}
-        <div style={{ borderTop: "1px solid #1e2030", padding: "16px 28px", flexShrink: 0 }}>
-          <div style={{ display: "flex", gap: 10, alignItems: "flex-end", background: "#0f1117", border: "1px solid #1e2030", borderRadius: 10, padding: "10px 14px", transition: "border-color 0.15s" }}
-            onFocus={() => {}} >
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKey}
-              placeholder="Ask about ESG metrics, BRSR disclosures, company sustainability data…"
-              rows={1}
-              style={{ flex: 1, background: "none", border: "none", outline: "none", resize: "none", fontSize: 13.5, color: "#e2e8f0", lineHeight: 1.6, fontFamily: "inherit", maxHeight: 120 }}
-            />
-            <button
-              onClick={() => send(input)}
-              disabled={!input.trim() || loading}
-              style={{ width: 32, height: 32, borderRadius: 7, background: input.trim() && !loading ? "#6366f1" : "#1e2030", border: "none", cursor: input.trim() && !loading ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s" }}
-            >
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M9 3l5 5-5 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            </button>
+        {/* Filters row */}
+        <div style={{ padding: "10px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0, borderBottom: "1px solid #0f1117" }}>
+          <div style={{ display: "flex", gap: 6 }}>
+            {SECTORS.map((s) => (
+              <button
+                key={s}
+                onClick={() => setSector(s)}
+                style={{ fontSize: 11, padding: "4px 10px", borderRadius: 6, border: `1px solid ${sector === s ? "#6366f1" : "#1e2030"}`, background: sector === s ? "#1e1b4b" : "transparent", color: sector === s ? "#818cf8" : "#475569", cursor: "pointer", fontFamily: "inherit" }}
+              >
+                {s}
+              </button>
+            ))}
           </div>
-          <p style={{ fontSize: 11, color: "#1e293b", margin: "8px 0 0", textAlign: "center" }}>
-            Enter to send · Shift+Enter for new line
-          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 11, color: "#334155" }}>Sort:</span>
+            {(["score", "ghg", "renewable"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setSort(s)}
+                style={{ fontSize: 11, padding: "4px 10px", borderRadius: 6, border: `1px solid ${sort === s ? "#6366f1" : "#1e2030"}`, background: sort === s ? "#1e1b4b" : "transparent", color: sort === s ? "#818cf8" : "#475569", cursor: "pointer", fontFamily: "inherit" }}
+              >
+                {s === "score" ? "ESG Score" : s === "ghg" ? "Low GHG" : "Renewable"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Cards grid */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "20px 28px" }}>
+          {filtered.length === 0 ? (
+            <div style={{ textAlign: "center", color: "#334155", paddingTop: 60, fontSize: 13 }}>No companies match your filter.</div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
+              {filtered.map((company) => (
+                <CompanyCard
+                  key={company.id}
+                  company={company}
+                  selected={selected?.id === company.id}
+                  onClick={() => setSelected(selected?.id === company.id ? null : company)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </main>
 
-      {/* ── Right panel: sources ── */}
-      <aside style={{ width: activeSource ? 340 : 0, borderLeft: activeSource ? "1px solid #1e2030" : "none", overflow: "hidden", transition: "width 0.25s ease", flexShrink: 0, display: "flex", flexDirection: "column" }}>
-        {activeSource && (
-          <>
-            <div style={{ padding: "16px 20px", borderBottom: "1px solid #1e2030", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 500 }}>Source Chunks</div>
-                <div style={{ fontSize: 11, color: "#475569" }}>{activeSource.sources?.length} retrieved</div>
-              </div>
-              <button onClick={() => setActiveSource(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#475569", padding: 4 }}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
-              </button>
-            </div>
-
-            <div style={{ flex: 1, overflowY: "auto", padding: "16px 16px" }}>
-              {activeSource.sources?.map((src, i) => (
-                <div key={src.chunk_id} style={{ marginBottom: 12, background: "#0f1117", border: "1px solid #1e2030", borderRadius: 8, overflow: "hidden" }}>
-                  {/* Source header */}
-                  <div style={{ padding: "10px 14px", borderBottom: "1px solid #1e2030", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ fontSize: 10, background: src.collection.includes("narrative") ? "#1e1b4b" : "#052e16", color: src.collection.includes("narrative") ? "#818cf8" : "#4ade80", padding: "2px 7px", borderRadius: 4, fontFamily: "var(--font-mono)", letterSpacing: "0.02em" }}>
-                        {collectionLabel(src.collection)}
-                      </span>
-                      <span style={{ fontSize: 10, color: "#334155" }}>#{i + 1}</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: scoreColor(src.score) }} />
-                      <span style={{ fontSize: 10, color: "#475569", fontFamily: "var(--font-mono)" }}>{(src.score * 100).toFixed(0)}%</span>
-                    </div>
-                  </div>
-
-                  {/* Metadata pills */}
-                  <div style={{ padding: "8px 14px", display: "flex", flexWrap: "wrap", gap: 4, borderBottom: "1px solid #1e2030" }}>
-                    {Object.entries(src.metadata)
-                      .filter(([k, v]) => v && !["strategy", "source_file", "row_count"].includes(k))
-                      .slice(0, 5)
-                      .map(([k, v]) => (
-                        <span key={k} style={{ fontSize: 10, background: "#0a0a0f", border: "1px solid #1e2030", borderRadius: 4, padding: "2px 7px", color: "#475569" }}>
-                          <span style={{ color: "#334155" }}>{k}:</span> {String(v)}
-                        </span>
-                      ))}
-                  </div>
-
-                  {/* Chunk text */}
-                  <div style={{ padding: "10px 14px", fontSize: 11.5, color: "#475569", lineHeight: 1.65, maxHeight: 140, overflowY: "auto", fontFamily: src.collection.includes("numerical") ? "var(--font-mono)" : "inherit" }}>
-                    {src.text.length > 400 ? src.text.slice(0, 400) + "…" : src.text}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+      {/* ── Detail panel ── */}
+      <aside style={{ width: selected ? 320 : 0, borderLeft: selected ? "1px solid #1e2030" : "none", overflow: "hidden", transition: "width 0.25s ease", flexShrink: 0 }}>
+        {selected && <DetailPanel company={selected} onClose={() => setSelected(null)} />}
       </aside>
 
       <style>{`
         * { box-sizing: border-box; }
         body { margin: 0; }
-        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #1e2030; border-radius: 2px; }
-        @keyframes pulse {
-          0%, 100% { opacity: 0.3; transform: scale(0.8); }
-          50% { opacity: 1; transform: scale(1); }
-        }
       `}</style>
     </div>
   );
