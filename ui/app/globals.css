@@ -1,26 +1,75 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ── Dark theme (default + explicit) ─────────────────────────── */
+:root,
+[data-theme="dark"] {
+  --clr-bg:              #0a0a0f;
+  --clr-bg-alt:          #060608;
+  --clr-surface:         #0f1117;
+  --clr-surface-active:  #1a1f2e;
+  --clr-surface-hover:   #1e2030;
+  --clr-border:          #1e2030;
+  --clr-border-alt:      #1a1a2e;
+  --clr-text:            #e2e8f0;
+  --clr-text-muted:      #94a3b8;
+  --clr-text-dim:        #64748b;
+  --clr-text-dimmer:     #475569;
+  --clr-text-dimmest:    #334155;
+  --clr-accent-bg:       #1e1b4b;
+  --clr-accent-border:   #312e81;
+  --clr-accent-text:     #818cf8;
+  --clr-accent-light:    rgba(99, 102, 241, 0.15);
+  --clr-input-bg:        #0f1117;
+  /* Compare page panel shades */
+  --clr-panel:           #0f1117;
+  --clr-panel-surface:   #1a1f2e;
+  --clr-panel-hover:     #222840;
+  --clr-panel-border:    #2a3050;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ── Light theme ──────────────────────────────────────────────── */
+[data-theme="light"] {
+  --clr-bg:              #f8fafc;
+  --clr-bg-alt:          #f1f5f9;
+  --clr-surface:         #ffffff;
+  --clr-surface-active:  #f0f4ff;
+  --clr-surface-hover:   #e2e8f0;
+  --clr-border:          #e2e8f0;
+  --clr-border-alt:      #d1d5db;
+  --clr-text:            #0f172a;
+  --clr-text-muted:      #334155;   /* dark slate — clearly readable */
+  --clr-text-dim:        #475569;   /* medium slate */
+  --clr-text-dimmer:     #64748b;   /* slightly lighter but still legible */
+  --clr-text-dimmest:    #94a3b8;   /* subtle labels — NOT invisible */
+  --clr-accent-bg:       #eef2ff;
+  --clr-accent-border:   #c7d2fe;
+  --clr-accent-text:     #4f46e5;
+  --clr-accent-light:    rgba(99, 102, 241, 0.10);
+  --clr-input-bg:        #ffffff;
+  /* Compare page panel shades */
+  --clr-panel:           #ffffff;
+  --clr-panel-surface:   #f0f4ff;
+  --clr-panel-hover:     #e8edf8;
+  --clr-panel-border:    #d1d5db;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ── Global reset ─────────────────────────────────────────────── */
+* { box-sizing: border-box; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: var(--clr-bg);
+  color: var(--clr-text);
+  font-family: var(--font-sans, "DM Sans", Arial, sans-serif);
+}
+
+/* ── Scrollbars ───────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 4px; height: 4px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: var(--clr-border); border-radius: 2px; }
+
+/* ── Animations ───────────────────────────────────────────────── */
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.8; }
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { ThemeToggle } from "../theme";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -58,20 +59,20 @@ const SECTION_ICONS: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 const COLORS = {
-  bg: "#0f1117",
-  surface: "#1a1f2e",
-  surfaceHover: "#222840",
-  border: "#2a3050",
-  accent: "#6366f1",
-  accentLight: "rgba(99,102,241,0.15)",
-  win: "#22c55e",
-  winBg: "rgba(34,197,94,0.1)",
-  lose: "#ef4444",
-  loseBg: "rgba(239,68,68,0.07)",
-  neutral: "#64748b",
-  text: "#e2e8f0",
-  textMuted: "#94a3b8",
-  textDim: "#475569",
+  bg:          "var(--clr-panel)",
+  surface:     "var(--clr-panel-surface)",
+  surfaceHover:"var(--clr-panel-hover)",
+  border:      "var(--clr-panel-border)",
+  accent:      "#6366f1",
+  accentLight: "var(--clr-accent-light)",
+  win:         "#22c55e",
+  winBg:       "rgba(34,197,94,0.1)",
+  lose:        "#ef4444",
+  loseBg:      "rgba(239,68,68,0.07)",
+  neutral:     "var(--clr-text-dim)",
+  text:        "var(--clr-text)",
+  textMuted:   "var(--clr-text-muted)",
+  textDim:     "var(--clr-text-dimmer)",
 };
 
 // ---------------------------------------------------------------------------
@@ -703,6 +704,7 @@ export default function ComparePage() {
         >
           Compare
         </span>
+        <ThemeToggle />
       </nav>
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }}>
