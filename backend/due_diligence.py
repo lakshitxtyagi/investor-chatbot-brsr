@@ -3,7 +3,10 @@ due_diligence.py — Multi-section Due Diligence Report Agent
 ============================================================
 Runs 10 targeted RAG queries against the BRSR Weaviate index (one per
 report section), aggregates retrieved chunks, and generates a single
-structured markdown report via Groq.
+structured markdown report.
+
+LLM routing: Groq is tried first; Gemini is used automatically as a
+fallback if Groq returns a rate-limit or context-length error.
 
 All analysis is grounded exclusively in the BRSR data stored in Weaviate.
 The prompt forbids the model from using external knowledge.
@@ -11,10 +14,8 @@ The prompt forbids the model from using external knowledge.
 
 from __future__ import annotations
 
-from groq import Groq
-
 from config import settings
-from rag import get_embedder, retrieve_chunks
+from rag import get_embedder, retrieve_chunks, call_llm
 
 # ---------------------------------------------------------------------------
 # Token budget constants
@@ -207,17 +208,22 @@ def _build_section_context(section_title: str, chunks: list[dict]) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Groq report generator
+# LLM report generator (Groq → Gemini fallback via call_llm)
 # ---------------------------------------------------------------------------
 
 def _call_groq_report(company: str, section_contexts: list[str]) -> str:
+    """Generate the due diligence report. Uses call_llm which auto-falls back to Gemini."""
     joined = "\n\n".join(section_contexts)
 
     # Hard cap to stay within token limits
     if len(joined) > _MAX_CONTEXT_CHARS:
         joined = joined[:_MAX_CONTEXT_CHARS] + "\n[context truncated]"
 
-    prompt = (
+    system = (
+        "You are a senior ESG analyst. Use ONLY the BRSR data in the user message. "
+        "Do NOT use external knowledge. Output clean, structured markdown."
+    )
+    user = (
         f"Company: {company}\n\n"
         "DATA (from BRSR filings only):\n"
         f"{joined}\n\n"
@@ -228,23 +234,7 @@ def _call_groq_report(company: str, section_contexts: list[str]) -> str:
         "Use only the data above. State 'No data available' for missing sections."
     )
 
-    client = Groq(api_key=settings.GROQ_API_KEY)
-    response = client.chat.completions.create(
-        model=settings.GROQ_MODEL,
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are a senior ESG analyst. Use ONLY the BRSR data in the user message. "
-                    "Do NOT use external knowledge. Output clean, structured markdown."
-                ),
-            },
-            {"role": "user", "content": prompt},
-        ],
-        temperature=0.2,
-        max_tokens=2048,
-    )
-    return response.choices[0].message.content.strip()
+    return call_llm(system, user, max_tokens=2048)
 
 
 # ---------------------------------------------------------------------------

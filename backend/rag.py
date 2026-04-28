@@ -12,7 +12,10 @@ from __future__ import annotations
 
 import os
 
+import logging
+import time
 from groq import Groq
+import groq as _groq_module
 import weaviate
 from weaviate.classes.query import Filter
 from sentence_transformers import SentenceTransformer
@@ -157,32 +160,124 @@ def build_context(chunks: list[dict]) -> str:
     return "\n\n---\n\n".join(parts)
 
 
-def call_groq(query: str, context: str) -> str:
-    client = Groq(api_key=settings.GROQ_API_KEY)
+def _call_openai_raw(system: str, user: str, max_tokens: int = 4096) -> str:
+    """Call OpenAI and return the response text. Raises on any API error."""
+    from openai import OpenAI  # type: ignore[import-untyped]  # lazy import
 
+    client = OpenAI(api_key=settings.OPENAI_API_KEY)
+    start_time = time.time()
+    response = client.chat.completions.create(
+        model=settings.OPENAI_MODEL,
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+        # temperature=0.2,
+        # max_tokens=max_tokens,
+    )
+    print(f"Length of request: {len(system) + len(user)}")
+    print(f"OpenAI time: {time.time() - start_time}")
+    return response.choices[0].message.content.strip()
+
+
+def _call_groq_raw(system: str, user: str, max_tokens: int = 4096) -> str:
+    """Call Groq and return the response text. Raises on any API error."""
+    client = Groq(api_key=settings.GROQ_API_KEY)
     response = client.chat.completions.create(
         model=settings.GROQ_MODEL,
         messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are an expert analyst for Business Responsibility and Sustainability Reports (BRSR). "
-                    "Use ONLY the retrieved context provided by the user to answer questions. "
-                    "If the context does not contain enough information, say so clearly. "
-                    "Be precise and cite company names and financial years when available."
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"=== RETRIEVED CONTEXT ===\n{context}\n\n"
-                    f"=== USER QUESTION ===\n{query}"
-                ),
-            },
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
         ],
         temperature=0.2,
+        max_tokens=max_tokens,
     )
     return response.choices[0].message.content.strip()
+
+
+def _call_gemini_raw(system: str, user: str) -> str:
+    """Call Gemini and return the response text. Raises on any API error."""
+    from google import genai as _genai  # lazy import so Gemini is truly optional
+
+    client = _genai.Client(api_key=settings.GEMINI_API_KEY)
+    prompt = f"{system}\n\n{user}"
+    response = client.models.generate_content(
+        model=settings.GEMINI_MODEL,
+        contents=prompt,
+    )
+    return response.text.strip()
+
+
+def call_llm(system: str, user: str, max_tokens: int = 4096) -> str:
+    """Call the best available LLM with automatic fallback.
+
+    Priority order:
+      1. OpenAI  (primary)
+      2. Groq    (first fallback)
+      3. Gemini  (second fallback)
+
+    Any API error (rate-limit, bad request, network) triggers the next provider.
+    Raises RuntimeError only if every configured provider fails.
+    """
+    providers: list[tuple[str, object]] = []
+    if settings.OPENAI_API_KEY:
+        providers.append(("OpenAI", lambda: _call_openai_raw(system, user, max_tokens)))
+    if settings.GROQ_API_KEY:
+        providers.append(("Groq", lambda: _call_groq_raw(system, user, max_tokens)))
+    if settings.GEMINI_API_KEY:
+        providers.append(("Gemini", lambda: _call_gemini_raw(system, user)))
+
+    if not providers:
+        raise RuntimeError(
+            "No LLM API key configured. Set OPENAI_API_KEY, GROQ_API_KEY, "
+            "or GEMINI_API_KEY in .env"
+        )
+
+    last_exc: Exception | None = None
+    for name, fn in providers:
+        try:
+            result = fn()
+            if len(providers) > 1:
+                logging.info("[LLM] Response from %s", name)
+            return result
+        except Exception as exc:
+            last_exc = exc
+            next_name = (
+                providers[providers.index((name, fn)) + 1][0]
+                if providers.index((name, fn)) + 1 < len(providers)
+                else None
+            )
+            if next_name:
+                logging.warning(
+                    "[LLM] %s failed (%s: %s) — trying %s",
+                    name,
+                    type(exc).__name__,
+                    exc,
+                    next_name,
+                )
+            else:
+                logging.error(
+                    "[LLM] %s failed (%s: %s) — no more providers",
+                    name,
+                    type(exc).__name__,
+                    exc,
+                )
+
+    raise RuntimeError(
+        f"All LLM providers failed. Last error: {last_exc}"
+    ) from last_exc
+
+
+# Keep backward-compatible alias used by older code paths
+def call_groq(query: str, context: str) -> str:
+    system = (
+        "You are an expert analyst for Business Responsibility and Sustainability Reports (BRSR). "
+        "Use ONLY the retrieved context provided by the user to answer questions. "
+        "If the context does not contain enough information, say so clearly. "
+        "Be precise and cite company names and financial years when available."
+    )
+    user = f"=== RETRIEVED CONTEXT ===\n{context}\n\n=== USER QUESTION ===\n{query}"
+    return call_llm(system, user)
 
 
 # ---------------------------------------------------------------------------
@@ -215,7 +310,7 @@ async def execute_rag(
     # 4. Generate answer
     if top_chunks:
         context = build_context(top_chunks)
-        answer = call_groq(query, context)
+        answer = call_groq(query, context)  # call_groq now routes through call_llm
     else:
         answer = "No relevant information found in the database for your query."
 

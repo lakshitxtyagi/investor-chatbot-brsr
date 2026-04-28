@@ -37,7 +37,7 @@ app.add_middleware(
 
 class QueryRequest(BaseModel):
     query: str
-    top_k: int = 5                     # chunks retrieved per collection
+    top_k: int = 2                     # chunks retrieved per collection
     collections: list[str] | None = None  # None → both; or ["narrativecollection"]
 
 

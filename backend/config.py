@@ -31,16 +31,22 @@ class Settings(BaseSettings):
 
     # Embedding model (must match the one used during indexing)
     EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
-    EMBEDDING_MODEL_PATH: str = os.path.join(
-        os.path.dirname(__file__), "model"
-    )
+    EMBEDDING_MODEL_PATH: str = os.path.join(os.path.dirname(__file__), "model")
 
     # Weaviate collections to search (must match schema class names)
     DEFAULT_COLLECTIONS: list[str] = ["NarrativeCollection", "NumericalCollection"]
 
-    # Groq
-    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY")
+    # OpenAI (primary LLM)
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    OPENAI_MODEL: str = "gpt-5-mini-2025-08-07"
+
+    # Groq (first fallback)
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
     GROQ_MODEL: str = "llama-3.1-8b-instant"
+
+    # Gemini (second fallback)
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_MODEL: str = "gemini-2.0-flash"
 
 
 settings = Settings()
