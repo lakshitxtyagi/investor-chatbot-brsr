@@ -379,7 +379,6 @@ export default function DashboardPage() {
             { label: "Dashboard", icon: "M2 12L6 4l4 6 2-3 2 5", active: true,  href: "/" },
             { label: "Compare",   icon: "M2 8h5M9 8h5M8 2v5M8 9v5", active: false, href: "/compare" },
             { label: "Research",  icon: "M3 3h10v10H3zM3 7h10M7 3v10", active: false, href: "/research" },
-            { label: "Alerts",    icon: "M8 2a5 5 0 010 10A5 5 0 018 2zM8 14v1", active: false, href: "#" },
           ].map((item) => (
             <Link key={item.label} href={item.href} style={{ textDecoration: "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 11px", borderRadius: 7, background: item.active ? "var(--clr-border)" : "transparent", cursor: "pointer", fontSize: 15, color: item.active ? "var(--clr-text)" : "var(--clr-text-dimmer)" }}>
