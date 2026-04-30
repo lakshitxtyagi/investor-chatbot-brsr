@@ -52,16 +52,6 @@ async def evaluate_rag(input_data: EvalInput) -> EvalResult:
             context=input_data["context"],
             answer=input_data["answer"],
         )
-    elif eval_type == "context_relevance":
-        prompt = build_context_relevance_prompt(
-            query=input_data["query"],
-            context_chunks=input_data["context"],
-        )
-    elif eval_type == "answer_correctness":
-        prompt = build_answer_correctness_prompt(
-            query=input_data["query"],
-            answer=input_data["answer"],
-        )
     else:
         raise ValueError(f"Unknown evaluation type: {eval_type}")
     
