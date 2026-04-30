@@ -103,5 +103,47 @@ async def evaluate_faithfulness(
             "eval_type": "faithfulness",
         }
     )
+    
+    ```
+async def evaluate_context_relevance(query: str, context: str) -> EvalResult:
+    """
+    Evaluate how relevant the context is to answering the question.
+    
+    Args:
+        query: The original question
+        context: The retrieved context chunks
+        
+    Returns:
+        EvalResult with context relevance score
+    """
+    return await evaluate_rag(
+        {
+            "query": query,
+            "context": context,
+            "answer": "",  # Not used for this evaluation
+            "eval_type": "context_relevance",
+        }
+    )
 
+
+async def evaluate_answer_correctness(query: str, answer: str) -> EvalResult:
+    """
+    Evaluate whether the answer directly and clearly addresses the question.
+    
+    Args:
+        query: The original question
+        answer: The generated answer
+        
+    Returns:
+        EvalResult with answer correctness score
+    """
+    return await evaluate_rag(
+        {
+            "query": query,
+            "context": "",  # Not used for this evaluation
+            "answer": answer,
+            "eval_type": "answer_correctness",
+        }
+    )
+```
 
